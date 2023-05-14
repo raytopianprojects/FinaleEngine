@@ -1,7 +1,9 @@
-from panda3d.core import NodePath, Vec3
+from panda3d.core import NodePath, Vec3, VirtualFileSystem
 from panda3d import bullet
 from window import window
 from direct.actor.Actor import Actor
+
+VFS = VirtualFileSystem()
 
 
 class Entity(NodePath):
@@ -9,6 +11,7 @@ class Entity(NodePath):
                  collider_shapes=bullet.BulletBoxShape(Vec3(1, 1, 1)), mass=None,
                  physics_world=window.physics_world):
         super().__init__(name)
+        self.name = name
 
         # reparent Entity to the scene graph automatically so users don't have to
         self.reparent_to(window.render)
