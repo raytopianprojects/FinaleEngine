@@ -2,11 +2,12 @@ from panda3d.core import NodePath, Vec3, VirtualFileSystem
 from panda3d import bullet
 from window import window
 from direct.actor.Actor import Actor
+from direct.showbase.DirectObject import DirectObject
 
 VFS = VirtualFileSystem()
 
 
-class Entity(NodePath):
+class Entity(NodePath, DirectObject):
     def __init__(self, name, mesh_name=None, has_bones=False, collider=False,
                  collider_shapes=bullet.BulletBoxShape(Vec3(1, 1, 1)), mass=None,
                  physics_world=window.physics_world):
@@ -17,7 +18,7 @@ class Entity(NodePath):
         self.reparent_to(window.render)
 
         # Add the entity to the window entity list, so we can do things such as collision
-        window.entity_list.append(self)
+        window.entity_list[(self.node,)] = self
 
         # We only want to add a collider to an entity if the user wants one, otherwise we're wasting processing power
         if collider:
@@ -86,6 +87,22 @@ class Entity(NodePath):
     def z(self, value):
         self.set_z(value)
 
+    @property
+    def scale(self):
+        return self.get_scale()
+
+    @scale.setter
+    def scale(self, scale):
+        self.set_scale(scale)
+
+    @property
+    def x_scale(self):
+        return self.get_sx()
+
+    @x_scale.setter
+    def x_scale(self, scale):
+        self.set_sx(scale)
+
     def play_animation(self, animation_name, start_frame=None, end_frame=None):
         if end_frame is None:
             end_frame = self.mesh.get_num_frames(animation_name)
@@ -122,7 +139,13 @@ class Entity(NodePath):
         self.mesh.set_play_rate(value)
 
     def on_destroy(self):
-        pass
+        if type(self.mesh) == Actor:
+            self.mesh.delete()
+
+        self.remove_node()
+
+        self.ignore_all()
+        self.remove_all_tasks()
 
 
 if __name__ == "__main__":
