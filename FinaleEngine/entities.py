@@ -1,7 +1,7 @@
 from entity import Entity
-from utilities import load_model
 from window import window
-from panda3d.core import LODNode, NodePath, FadeLODNode, Fog, AmbientLight
+from panda3d.core import LODNode, NodePath, FadeLODNode, Fog, AmbientLight, GeoMipTerrain, HeightfieldTesselator
+import enums
 
 _array = [0, 1, 1, 1, 1,
           1, 1, 1, 1, 1,
@@ -64,6 +64,8 @@ class Chunk(Entity):
         self.get_child(block_index).remove_node()
 
     def add_block(self, block_index, block_type):
+        from utilities import load_model
+
         model = load_model(self.model_map[block_type])
         model.reparent_to(self)
         self.flatten_strong()
@@ -87,3 +89,35 @@ class ChunkChunk(Entity):
         for chunk in self.chunks:
             chunk.flatten_strong()
 
+
+class Terrain(Entity):
+    def __init__(self, name, height_map, texture = None, height = 1, terrain_type=enums.TerrainTypes.GeoMipMap):
+        super().__init__(name)
+
+        if terrain_type == enums.TerrainTypes.GeoMipMap:
+            self._terrain = GeoMipTerrain(name)
+            self._terrain.set_heightfield(height_map)
+            self._terrain.getRoot().reparent_to(self)
+            self._terrain.getRoot().set_sz(height)
+
+            if texture:
+                self._terrain.getRoot().set_texture(texture)
+
+            self._terrain.set_block_size(8)
+            self._terrain.set_near(40)
+            self._terrain.set_far(100)
+            self._terrain.set_focal_point(window.camera)
+
+            self._terrain.generate()
+
+            self.add_task(self.update_terrain)
+
+        elif terrain_type == enums.TerrainTypes.Heightfield:
+            ...
+
+        elif terrain_type == enums.TerrainTypes.Shader:
+            ...
+
+    def update_terrain(self, task):
+        self._terrain.update()
+        return task.cont

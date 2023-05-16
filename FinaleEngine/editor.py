@@ -5,6 +5,9 @@ from tkinter import ttk, filedialog
 import tkinter
 import subprocess
 import webbrowser
+from idlelib.percolator import Percolator
+from idlelib.colorizer import ColorDelegator
+import pathlib
 
 window.windowType = 'none'
 
@@ -138,24 +141,108 @@ def database():
 
 # The code editor window which lets users edit python code
 def code():
+    if current_project_vfs:
+        # Create the code editor window
+        code_editor = new_window(title="Code Editor")
 
-    # Create the code editor window
-    code_editor = new_window(title="Code Editor")
+        side_frame = ttk.Frame(master=code_editor)
+        side_frame.grid(column=0, row=0, sticky="nsew", rowspan=2)
 
-    #
-    add_code = tkinter.Button(master=code_editor, text="New Script")
-    add_code.grid(column=0, row=0, sticky="nsew")
+        # The list of python files that can be editied
+        code_items = tkinter.Listbox(master=side_frame)
+        code_items.grid(column=0, row=1, columnspan=2, sticky="nsew")
 
-    code_items = tkinter.Listbox(master=code_editor)
-    code_items.grid(column=0, row=1, rowspan=2, sticky="nsew")
+        for item in VFS.scan_directory(current_project_vfs + "/Code"):
+            # Convert item into a str because currently its a panda3d filepath object
+            item = str(item)
 
-    code_text = tkinter.Text(master=code_editor)
-    code_text.grid(column=1, row=0, columnspan=4, rowspan=2, sticky="nsew")
+            # we only want the file name not the path so break the filepath up into a list and get the last index
+            item = item.split("/")
+            item = item[-1]
+            code_items.insert(tkinter.END, item)
 
-    # Each widget will now fill the frame/window
-    code_editor.grid_columnconfigure(0, weight=1)
-    code_editor.grid_columnconfigure(1, weight=1)
-    code_editor.grid_rowconfigure(0, weight=1)
+        # By setting the row and column configure for the code items grid entry we make sure that it fills the grid
+        side_frame.rowconfigure(1, weight=1)
+        side_frame.columnconfigure(0, weight=1)
+
+        # Create an entry widget so users can name the script
+        code_file_name = ttk.Entry(master=side_frame)
+        code_file_name.grid(column=1, row=0)
+
+        # TODO Check if file name already exists and if it does append 1
+        def add_item():
+            if code_file_name.get() == "":
+                VFS.create_file(current_project_vfs + f"/Code/new_file_{add_item.index}.py")
+                code_items.insert(tkinter.END, f"new_file_{add_item.index}")
+            else:
+                if pathlib.Path(code_file_name.get()).suffix:
+                    VFS.create_file(current_project_vfs + f"/Code/{code_file_name.get()}")
+                    code_items.insert(tkinter.END, code_file_name.get())
+                else:
+                    VFS.create_file(current_project_vfs + f"/Code/{code_file_name.get()}.py")
+                    code_items.insert(tkinter.END, code_file_name.get() + ".py")
+
+            # Increment add_item's index, so we don't overwrite any files
+            add_item.index += 1
+
+        add_item.index = 0
+
+        # Create a button that adds new script
+        add_code = ttk.Button(master=side_frame, text="New Script", command=add_item)
+        add_code.grid(column=0, row=0, sticky="n")
+
+        # The text editor itself
+        code_textbox = tkinter.Text(master=code_editor)
+
+        # This uses python's built in idle syntax highlighting so we don't have to write our own
+        Percolator(code_textbox).insertfilter(ColorDelegator())
+
+        code_textbox.grid(column=1, row=0, rowspan=2, sticky="nsew")
+
+        # Each widget will now fill the frame/window
+        code_editor.grid_columnconfigure(0, weight=1)
+        code_editor.grid_columnconfigure(1, weight=1)
+        code_editor.grid_rowconfigure(0, weight=1)
+
+        # We use this function as a callback when someone selects one of the entires in the code_items listbox
+        # When they due we open that file and insert it into the code editor
+        def open_code_file(event):
+            # Get the selected listbox item
+            code_selection = event.widget.curselection()
+
+            # Check if we even have a selection
+            if code_selection:
+                # Get the filename
+                file_to_open = event.widget.get(code_selection[0])
+
+                # Store the filename so we can save to the proper file in auto_save_code
+                open_code_file.code_item_selection = file_to_open
+
+                # Open the file
+                file = VFS.read_file(current_project_vfs + "/Code/" + file_to_open, auto_unwrap=True)
+
+                # Clear the textbox so tkinter doesn't append the text onto the last text
+                code_textbox.delete("1.0", tkinter.END)
+
+                # Insert the text from the file into the textbox
+                code_textbox.insert("1.0", file)
+
+        # Code item selection lets us track the name of the selected file so we can auto save to it
+        # when the text inside is edited
+        open_code_file.code_item_selection = None
+
+        # Open the appropriate file when an item is selected
+        code_items.bind("<<ListboxSelect>>", open_code_file)
+
+        # We need to save the coded file to disk automatically whenever the user types
+        def auto_save_code(event):
+            if open_code_file.code_item_selection:
+                VFS.write_file(current_project_vfs + "/Code/" + open_code_file.code_item_selection,
+                               auto_wrap=True,
+                               data=bytes(event.widget.get("1.0", tkinter.END), encoding='utf8'))
+
+        # Auto save when coding in the code_textbox
+        code_textbox.bind("<KeyRelease>", auto_save_code)
 
 
 def assets():
@@ -210,7 +297,7 @@ for x in [["File", ["New", new_project,
                     "New Level Test", lambda: print('NEW'),
                     "Load Level Test", lambda: print("New")]],
           ["Tools", ["Database", database,
-                     "Code", code,
+                     "Code Editor", code,
                      "Assets", lambda: print('NEW'),
                      "Music", music,
                      "Sequence", lambda: print('NEW')]],
