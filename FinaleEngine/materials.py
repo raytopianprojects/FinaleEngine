@@ -1,10 +1,11 @@
 from direct.filter.FilterManager import FilterManager
-from panda3d.core import Texture, Shader
+from panda3d.core import Texture, Shader, NodePath, Material
 from FinaleEngine.window import window
 
 
 class PostProcess:
     """A class that manages post process effects. It simplifies setting up, manging, and chaining them."""
+
     def __init__(self, window_win=None, window_cam=None):
 
         if window_cam is None:
@@ -50,10 +51,24 @@ class PostProcess:
         self.effects.remove(index)
 
 
-post_process = PostProcess()
+class Look:
+    def __init__(self):
+        self.material = None
+        self.attributes = {}
+        self.shader = None
+        self.shader_inputs = None
+
+    def apply(self, node: NodePath):
+        node.set_shader(self.shader)
+        node.set_shader_inputs(self.shader_inputs)
+
+        for attribute, priority in self.attributes.items():
+            node.set_attrib(self.attributes, priority)
 
 
 if __name__ == "__main__":
+    post_process = PostProcess()
+
     post_process.add_effect(vertex_shader="""#version 150
 // Uniform inputs
 uniform mat4 p3d_ModelViewProjectionMatrix;

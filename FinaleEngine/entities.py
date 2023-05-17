@@ -3,28 +3,6 @@ from window import window
 from panda3d.core import LODNode, NodePath, FadeLODNode, Fog, AmbientLight, GeoMipTerrain, HeightfieldTesselator
 import enums
 
-_array = [0, 1, 1, 1, 1,
-          1, 1, 1, 1, 1,
-          1, 1, 1, 1, 1,
-          1, 1, 0, 1, 1,
-          1, 1, 1, 1, 1,
-          1, 0, 1, 1, 1,
-          1, 1, 1, 1, 0,
-          0, 0, 0, 1, 1,
-          1, 0, 1, 1, 1,
-          1, 1, 1, 1, 0,
-          0, 0, 0, 1, 1,
-          1, 0, 1, 1, 1,
-          1, 1, 1, 1, 0,
-          0, 0, 0, 1, 1,
-          1, 0, 1, 1, 1,
-          1, 0, 1, 1, 1,
-          ]
-
-models = {1: window.loader.load_model("teapot"),
-          2: window.loader.load_model("teapot"),
-          3: window.loader.load_model("teapot")}
-
 
 class Chunk(Entity):
     def __init__(self, name, grid_3d, model_map, spacing=5, grid_size=5):
@@ -76,12 +54,12 @@ class ChunkChunk(Entity):
         super().__init__(name)
         self.chunks = []
 
-    def create_chunks(self, amount):
+    def create_chunks(self, amount, models, array):
 
         for z in range(amount):
             for y in range(amount):
                 for x in range(amount):
-                    chunk = Chunk("chunk", _array, models)
+                    chunk = Chunk("chunk", array, models)
                     chunk.set_pos((x * 25, y * 25, z * 25))
                     self.chunks.append(chunk)
                     chunk.reparent_to(self)
@@ -121,3 +99,13 @@ class Terrain(Entity):
     def update_terrain(self, task):
         self._terrain.update()
         return task.cont
+
+
+class Compute:
+    def __init__(self):
+        ...
+
+
+class Sprite:
+    def __init__(self):
+        ...

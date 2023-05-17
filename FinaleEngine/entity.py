@@ -42,6 +42,7 @@ class Entity(NodePath, DirectObject):
             # attach the collider to the Entity
             self.collider_node = self.attach_new_node(self.collider)
 
+        # Create the entity's mesh
         if mesh_name:
             if has_bones:
                 self.mesh: Actor = Actor(mesh_name)
@@ -102,6 +103,207 @@ class Entity(NodePath, DirectObject):
     @x_scale.setter
     def x_scale(self, scale):
         self.set_sx(scale)
+
+    @property
+    def y_scale(self):
+        return self.get_sy()
+
+    @y_scale.setter
+    def y_scale(self, scale):
+        self.set_sy(scale)
+
+    @property
+    def z_scale(self):
+        return self.get_sz()
+
+    @z_scale.setter
+    def z_scale(self, scale):
+        self.set_sz(scale)
+
+    @property
+    def rotation(self):
+        return self.get_hpr()
+
+    @rotation.setter
+    def rotation(self, rotation):
+        self.set_hpr(rotation)
+
+    @property
+    def heading(self):
+        return self.get_h()
+
+    @heading.setter
+    def heading(self, degrees):
+        self.set_h(degrees)
+
+    @property
+    def pitch(self):
+        return self.get_p()
+
+    @pitch.setter
+    def pitch(self, degrees):
+        self.set_p(degrees)
+
+    @property
+    def roll(self):
+        return self.get_r()
+
+    @roll.setter
+    def roll(self, degrees):
+        self.set_r(degrees)
+
+    @property
+    def quat(self):
+        return self.get_quat()
+
+    @quat.setter
+    def quat(self, quaternion):
+        self.set_quat(quaternion)
+
+    @property
+    def texture(self):
+        if self.mesh:
+            if self.mesh.has_texture():
+                return self.mesh.get_texture()
+        else:
+            return None
+
+    @texture.setter
+    def texture(self, texture):
+        if self.mesh:
+            self.mesh.set_texture(texture)
+
+    @property
+    def shader(self):
+        return self.get_shader()
+
+    @shader.setter
+    def shader(self, shader):
+        self.set_shader(shader)
+
+    @property
+    def material(self):
+        if self.has_material():
+            return self.get_material()
+
+    @material.setter
+    def material(self, material):
+        if material is None:
+            self.clear_material()
+        else:
+            self.set_material(material)
+
+    @property
+    def bin_draw_order(self):
+        return self.get_bin_draw_order()
+
+    @property
+    def bin_name(self):
+        return self.get_bin_name()
+
+    @property
+    def color(self):
+        return self.get_color()
+
+    @property
+    def depth_offset(self):
+        return self.get_depth_offset()
+
+    @property
+    def depth_write(self):
+        return self.get_depth_write()
+
+    @property
+    def depth_test(self):
+        return self.get_depth_test()
+
+    @property
+    def instance_count(self):
+        return self.get_instance_count()
+
+    @instance_count.setter
+    def instance_count(self, instance_count):
+        self.set_instance_count(instance_count)
+
+    @property
+    def matrix(self):
+        return self.get_mat()
+
+    @matrix.setter
+    def matrix(self, matrix):
+        self.set_mat(matrix)
+
+    @property
+    def max_search_depth(self):
+        return self.get_max_search_depth()
+
+    @max_search_depth.setter
+    def max_search_depth(self, max_search_depth):
+        self.set_max_search_depth(max_search_depth)
+
+    @property
+    def node_name(self):
+        return self.get_name()
+
+    @node_name.setter
+    def node_name(self, node_name):
+        self.set_name(node_name)
+
+    @property
+    def alpha(self):
+        return self.get_sa()
+
+    @alpha.setter
+    def alpha(self, alpha):
+        self.set_sa(alpha)
+
+    @property
+    def red(self):
+        return self.get_sr()
+
+    @red.setter
+    def red(self, red):
+        self.set_sr(red)
+
+    @property
+    def blue(self):
+        return self.get_sb()
+
+    @blue.setter
+    def blue(self, blue):
+        self.set_sb(blue)
+
+    @property
+    def green(self):
+        return self.get_sg()
+
+    @green.setter
+    def green(self, green):
+        self.set_sg(green)
+
+    @property
+    def shear(self):
+        return self.get_shear()
+
+    @shear.setter
+    def shear(self, shear):
+        self.set_shear(shear)
+
+    @property
+    def two_sided(self):
+        return self.get_two_sided()
+
+    @two_sided.setter
+    def two_sided(self, is_two_sided):
+        self.set_two_sided(is_two_sided)
+
+    @property
+    def transparency(self):
+        return self.get_transparency()
+
+    @transparency.setter
+    def transparency(self, transparency):
+        self.set_transparency(transparency)
 
     def play_animation(self, animation_name, start_frame=None, end_frame=None):
         if end_frame is None:
