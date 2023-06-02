@@ -58,11 +58,15 @@ window.run()
         VFS.create_file(project_path + f"/FinaleEngine/{file}.py")
         VFS.write_file(auto_wrap=True, filename=project_path + f"/FinaleEngine/{file}.py", data=python_file)
 
+    create_notebook()
+
 
 def load_project():
     global current_project, current_project_vfs
     current_project = filedialog.askdirectory(title="Load Project")
     current_project_vfs = Filename.fromOsSpecific(current_project)
+
+    create_notebook()
 
 
 def play():
@@ -86,7 +90,7 @@ def load_level_test():
     ...
 
 
-def database():
+def database(parent):
     """Creates the database widget/window which allows the user to create and manage different types of data.
     Such as CSV"""
 
@@ -96,8 +100,7 @@ def database():
     # Add options for different datatypes for now just do python dicts with str and ast.literal_eval
     # each data item should be a folder similar to the levels
 
-    database_window = new_window(title="Database")
-    frame1 = tkinter.Frame(master=database_window)
+    frame1 = tkinter.Frame(master=parent)
     frame1.grid(column=0, row=0, columnspan=4)
 
     database_items = tkinter.Listbox(master=frame1)
@@ -140,10 +143,10 @@ def database():
 
 
 # The code editor window which lets users edit python code
-def code():
+def code(parent):
     if current_project_vfs:
         # Create the code editor window
-        code_editor = new_window(title="Code Editor")
+        code_editor = parent
 
         side_frame = ttk.Frame(master=code_editor)
         side_frame.grid(column=0, row=0, sticky="nsew", rowspan=2)
@@ -200,9 +203,9 @@ def code():
         code_textbox.grid(column=1, row=0, rowspan=2, sticky="nsew")
 
         # Each widget will now fill the frame/window
-        code_editor.grid_columnconfigure(0, weight=1)
-        code_editor.grid_columnconfigure(1, weight=1)
-        code_editor.grid_rowconfigure(0, weight=1)
+        # code_editor.grid_columnconfigure(0, weight=1)
+        # code_editor.grid_columnconfigure(1, weight=1)
+        # code_editor.grid_rowconfigure(0, weight=1)
 
         # We use this function as a callback when someone selects one of the entires in the code_items listbox
         # When they due we open that file and insert it into the code editor
@@ -295,12 +298,8 @@ for x in [["File", ["New", new_project,
                     "Exit", quit]],
           ["Game", ["Play", play,
                     "New Level Test", lambda: print('NEW'),
-                    "Load Level Test", lambda: print("New")]],
-          ["Tools", ["Database", database,
-                     "Code Editor", code,
-                     "Assets", lambda: print('NEW'),
-                     "Music", music,
-                     "Sequence", lambda: print('NEW')]],
+                    "Load Level Test", lambda: print("New"),
+                    "Play Music", music]],
           ["Settings", ["Level Settings", lambda: print('NEW'),
                         "Game Settings", lambda: print('NEW')]],
           ["Help", ["Docs", lambda: print('NEW'),
@@ -322,11 +321,43 @@ for x in [["File", ["New", new_project,
         menu=menu,
     )
 
+notebook = ttk.Notebook(window.tkRoot)
+viewport_frame = ttk.Frame(notebook, width=1280, height=720)
+notebook.add(viewport_frame, text='Game')
+
+
+def create_notebook():
+    for tab in notebook.tabs():
+        # All other tabs end in a number not a letter, so we can remove them knowing this
+        # We want to keep the first tab because it's the game viewport tab
+        if tab[-1] != "e":
+            notebook.forget(tab_id=tab)
+
+    for name, contents in {"Database": database, "Code Editor": code, "Assets": None, "Sequences": None}.items():
+        frame = ttk.Frame(notebook)
+
+        if contents:
+            contents(frame)
+
+        notebook.add(frame, text=name)
+
+
+notebook.grid(column=0, row=0, columnspan=10, rowspan=10)
+
 window_properties = WindowProperties.getDefault()
-window_properties.set_parent_window(window.tkRoot.winfo_id())
+window_properties.set_parent_window(viewport_frame.winfo_id())
 window_properties.set_origin((0, 0))
-window_properties.set_size(1, 1)
+window_properties.set_size(viewport_frame.winfo_width(), viewport_frame.winfo_height())
 
 window.openDefaultWindow(props=window_properties)
+
+
+# resize viewport when user maximizes
+def resize_viewport(event):
+    window_properties.set_size(viewport_frame.winfo_width(), viewport_frame.winfo_height())
+    window.win.request_properties(window_properties)
+
+
+window.tkRoot.bind("<Configure>", resize_viewport)
 
 window.run()

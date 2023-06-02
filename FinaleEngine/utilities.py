@@ -1,8 +1,8 @@
-from window import window
+from FinaleEngine.window import window
 from direct.actor.Actor import Actor
 from panda3d.core import VirtualFileSystem, NodePath, PerlinNoise2, PNMImage, StackedPerlinNoise2, Texture, CardMaker
 import ast
-from entities import Terrain
+from FinaleEngine.entities import Terrain
 from random import randint
 
 # The virtual file system simplifies handling file paths
@@ -82,14 +82,16 @@ def plane():
     return window.render.attach_new_node(card.generate())
 
 
-water = plane()
-water.set_p(-90)
-water.set_scale(20, 20, 20)
-water.set_z(20)
+def create_display_region(camera, dimensions, color = None):
+    region = camera.node().getDisplayRegion(0)
+    region.setDimensions(dimensions[0],
+                         dimensions[1],
+                         dimensions[2],
+                         dimensions[3])
 
-a = generate_terrain()
-a.set_scale(100, 100, 8)
-p = load_model("panda")
-p.reparent_to(window.render)
-p.set_z(150)
-window.run()
+    if color:
+        region.setClearColor(color)
+        region.setClearColorActive(True)
+
+    aspect_ratio = float(region.get_pixel_width()) / float(region.get_pixel_height())
+    camera.node().get_lens().set_aspect_ratio(aspect_ratio)

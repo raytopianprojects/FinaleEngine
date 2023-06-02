@@ -1,6 +1,6 @@
 from panda3d.core import NodePath, Vec3, VirtualFileSystem
 from panda3d import bullet
-from window import window
+from FinaleEngine.window import window
 from direct.actor.Actor import Actor
 from direct.showbase.DirectObject import DirectObject
 
@@ -8,14 +8,33 @@ VFS = VirtualFileSystem()
 
 
 class Entity(NodePath, DirectObject):
-    def __init__(self, name, mesh_name=None, has_bones=False, collider=False,
+    def __init__(self, name, parent=None, mesh_name=None, has_bones=False, collider=False, sound=None,
                  collider_shapes=bullet.BulletBoxShape(Vec3(1, 1, 1)), mass=None,
-                 physics_world=window.physics_world):
+                 physics_world=window.physics_world, is_disabled = False):
         super().__init__(name)
         self.name = name
 
+        self._is_disabled = is_disabled
+        self.events_list = None
+        self.tasks_list = None
+
+        self.mesh = None
+        self.mesh_name = mesh_name
+        self.had_bones = has_bones
+        self.collider = collider
+
+        self.sound = sound
+
+        self.collider_node = None
+        self.collider = None
+        self.collider_shapes = collider_shapes
+        self.mass = mass
+
         # reparent Entity to the scene graph automatically so users don't have to
-        self.reparent_to(window.render)
+        if parent is None:
+            self.reparent_to(window.render)
+        else:
+            self.reparent_to(parent)
 
         # Add the entity to the window entity list, so we can do things such as collision
         window.entity_list[(self.node,)] = self
@@ -55,6 +74,34 @@ class Entity(NodePath, DirectObject):
                 self.mesh.reparent_to(self.collider_node)
             else:
                 self.mesh.reparent_to(self)
+
+        if sound:
+            self.sound = window.audio3d.load_sfx(sound)
+            window.audio3d.attach_sound_to_object(self.sound, self)
+
+    @property
+    def is_disabled(self):
+        return self._is_disabled
+
+    # TODO Create function that tracks
+    @is_disabled.setter
+    def is_disabled(self, disable):
+        if disable:
+            self.events_list = self.get_all_accepting()
+            self.ignore_all()
+        else:
+            if self._is_disabled:
+                for event in self.events_list:
+                    self.accept(event)
+
+                for task in self.tasks_list:
+                    self.add_task(task)
+
+        self._is_disabled = disable
+
+
+
+
 
     @property
     def location(self):
@@ -341,13 +388,22 @@ class Entity(NodePath, DirectObject):
         self.mesh.set_play_rate(value)
 
     def on_destroy(self):
+        # If the mesh is an Actor we need to have panda3d clean it up
         if type(self.mesh) == Actor:
             self.mesh.delete()
 
+        # Remoce the node from the scene graph so there's no reference
         self.remove_node()
 
+        # Have the entity ignore all input and turn off all of it's tasks
         self.ignore_all()
         self.remove_all_tasks()
+
+    def on_click(self):
+        pass
+
+    def on_hover(self):
+        pass
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
-from entity import Entity
-from window import window
+from FinaleEngine.entity import Entity
+from FinaleEngine.window import window
 from panda3d.core import LODNode, NodePath, FadeLODNode, Fog, AmbientLight, GeoMipTerrain, HeightfieldTesselator
-import enums
+from FinaleEngine import enums
 
 
 class Chunk(Entity):
